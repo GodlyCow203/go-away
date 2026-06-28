@@ -1,0 +1,26 @@
+name: Update YouTube Title
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Run updater
+        env:
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          TOKEN: ${{ secrets.TOKEN }}
+        run: node updater.js
