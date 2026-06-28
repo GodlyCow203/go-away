@@ -2,7 +2,7 @@ name: Update YouTube Title
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
   push:
     branches: [main]
@@ -10,6 +10,8 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       
@@ -26,3 +28,12 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           TOKEN: ${{ secrets.TOKEN }}
         run: node updater.js
+        
+      - name: Keep repo alive
+        run: |
+          date > .last-run
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .last-run
+          git diff --cached --quiet || git commit -m "heartbeat: $(date -u +%Y-%m-%d-%H:%M:%S)"
+          git push
