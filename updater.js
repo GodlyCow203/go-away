@@ -45,13 +45,8 @@ async function run() {
     const auth = await authorize();
     const youtube = google.youtube({ version: "v3", auth });
 
-    const { title, categoryId, viewCount } = await getVideoDetails(youtube);
+    const { categoryId, viewCount } = await getVideoDetails(youtube);
     const expectedTitle = TITLE_TEMPLATE.replace("{views}", Number(viewCount).toLocaleString());
-
-    if (title === expectedTitle) {
-        console.log("Title already up to date: " + expectedTitle);
-        return;
-    }
 
     await updateTitle(youtube, expectedTitle, categoryId);
     console.log("Updated title to: " + expectedTitle);
