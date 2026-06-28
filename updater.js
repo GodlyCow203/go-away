@@ -24,7 +24,7 @@ async function getVideoDetails(youtube) {
     return {
         title: video.snippet.title,
         categoryId: video.snippet.categoryId,
-        viewCount: video.statistics.viewCount,
+        viewCount: parseInt(video.statistics.viewCount, 10),
     };
 }
 
@@ -45,8 +45,25 @@ async function run() {
     const auth = await authorize();
     const youtube = google.youtube({ version: "v3", auth });
 
-    const { categoryId, viewCount } = await getVideoDetails(youtube);
-    const expectedTitle = TITLE_TEMPLATE.replace("{views}", Number(viewCount).toLocaleString());
+    // Try up to 3 times to get consistent non-zero view count
+    let viewCount = 0;
+    let categoryId;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (viewCount === 0 && attempts < maxAttempts) {
+        const details = await getVideoDetails(youtube);
+        viewCount = details.viewCount;
+        categoryId = details.categoryId;
+        attempts++;
+
+        if (viewCount === 0 && attempts < maxAttempts) {
+            console.log(`Got 0 views, retrying... (${attempts}/${maxAttempts})`);
+            await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds
+        }
+    }
+
+    const expectedTitle = TITLE_TEMPLATE.replace("{views}", viewCount.toLocaleString());
 
     await updateTitle(youtube, expectedTitle, categoryId);
     console.log("Updated title to: " + expectedTitle);
